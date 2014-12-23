@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title></title>
+
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: 'RobotoDraft', sans-serif;
+      font-size: .8em;
+      margin: 0;
+    }
+    canvas {
+      background-color: none;
+      border: 2px solid lightgray;
+      margin: 0 auto;
+      display: block;
+    }
+    label {
+      color: lightgray;
+      margin-right: 4px;
+    }
+    select {
+      margin-right: 30px;
+    }
+    section {
+      margin-top: 10px;
+    }
+    #input form {
+      margin: 0 auto;
+      width: 430px;
+    }
+  </style>
+
+</head>
+<body>
+
+<section id="input">
+  <form>
+    <label for="display">Display</label>
+    <select id="display">
+      <option value="colors">Colors</option>
+      <option value="numbers">Numbers</option>
+      <option value="letters">Letters</option>
+      <option value="symbols">Symbols</option>
+    </select>
+    <label for="pause">Pause (in seconds)</label>
+    <select id="pause">
+      <option value="colors">0.0</option>
+      <option value="numbers">0.5</option>
+      <option value="letters">1.0</option>
+      <option value="symbols">2.0</option>
+      <option value="symbols">5.0</option>
+      <option value="symbols">10.0</option>
+    </select>
+    <button>Solve</button>
+  </form>
+</section>
+
+<section id="main">
+  <canvas id="stage"></canvas>
+</section>
+
+<script>
+  /**
+   * Determine cell sizes and add to matrix.
+   * Apply click handler.
+   */
+var canvas_width = window.innerWidth - (6 * 2);
+var canvas_height = window.innerHeight - (6 * 2) - 60;
+
+var canvas_size = Math.min(canvas_width, canvas_height);
+var size_remainder = canvas_size % 3;
+var CANVAS_SIZE = canvas_size - size_remainder;
+
+var cnvs = document.getElementById('stage');
+cnvs.width = CANVAS_SIZE;
+cnvs.height = CANVAS_SIZE;
+cnvs.style.visibility = 'visible';
+
+var ctx = cnvs.getContext("2d");
+
+function drawBoard() {
+  var region_size = parseInt(CANVAS_SIZE / 3);
+  var cell_size = parseInt(region_size / 3);
+
+  ctx.save();
+  drawCells(cell_size);
+  ctx.restore();
+  drawRegions(region_size);
+}
+
+function drawRegions(size) {
+  var n;
+
+  ctx.beginPath();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'lightgray';
+
+  for (n=1; n < 3; n++) {
+    ctx.moveTo(size * n, 0);
+    ctx.lineTo(size * n, CANVAS_SIZE);
+
+    ctx.moveTo(0, size * n);
+    ctx.lineTo(CANVAS_SIZE, size * n);
+  }
+
+  ctx.stroke();
+  ctx.closePath();
+}
+
+function drawCells(size) {
+  var n;
+
+  ctx.beginPath();
+  ctx.setLineDash([2,3]);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'lightgray';
+
+  for (n=1; n < 9; n++) {
+    // We'll let the region boundary handle these.
+    if (n == 3 || n == 6) continue;
+
+    ctx.moveTo(size * n, 0);
+    ctx.lineTo(size * n, CANVAS_SIZE);
+
+    ctx.moveTo(0, size * n);
+    ctx.lineTo(CANVAS_SIZE, size * n);
+  }
+
+  ctx.stroke();
+}
+
+drawBoard();
+</script>
+
+</body>
+</html>
