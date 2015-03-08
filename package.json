@@ -1,0 +1,9 @@
+{
+  "name": "sudoku-solver",
+  "version": "0.0.1",
+  "description": "A sudoku solver with a web UI, implemented in node.",
+  "dependencies": {
+    "express": "^4.10.6",
+    "socket.io": "^1.2.1"
+  }
+}

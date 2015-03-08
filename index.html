@@ -55,7 +55,7 @@
       <option value="symbols">5.0</option>
       <option value="symbols">10.0</option>
     </select>
-    <button>Solve</button>
+    <button id="btn_solve">Solve</button>
   </form>
 </section>
 
@@ -63,11 +63,209 @@
   <canvas id="stage"></canvas>
 </section>
 
+<script src="/socket.io/socket.io.js"></script>
+
 <script>
+
+var socket = io();
+
   /**
    * Determine cell sizes and add to matrix.
    * Apply click handler.
    */
+
+  /**
+   * Draw lines better
+   * offsetX and offsetY
+   */
+var app = function() {
+  var _my, that, _translations;
+
+  _my = {
+    status: ''
+  };
+
+  _translations = [
+    {number: 1, color: 'red', letter: 'A', symbol:'?'},
+    {number: 2, color: 'orange', letter: 'B', symbol:'?'},
+    {number: 3, color: 'yellow', letter: 'C', symbol:'?'},
+    {number: 4, color: 'lime', letter: 'D', symbol:'?'},
+    {number: 5, color: 'green', letter: 'E', symbol:'?'},
+    {number: 6, color: 'aqua', letter: 'F', symbol:'?'},
+    {number: 7, color: 'blue', letter: 'G', symbol:'?'},
+    {number: 8, color: 'fuchsia', letter: 'H', symbol:'?'},
+    {number: 9, color: 'purple', letter: 'I', symbol:'?'}
+  ];
+
+  that = {};
+  that.board = null;
+  that.init = function() {
+
+  };
+  that.setStatus = function(status) {
+    _my.status = status;
+    return this;
+  };
+  that.getStatus = function() {
+    return _my.status;
+  };
+  that.translate = function(v) {
+    var val = {};
+    val.type = 'color';
+    val.value = _translations[v - 1][val.type];
+
+    return val;
+  };
+  return that;
+};
+
+var board = function() {
+  var _my, that;
+
+  _my = {
+    cells: [],
+    active_cell: null
+  };
+
+  that = {};
+  that.initialize = function() {
+    var r, c, obj;
+    var cell_size = parseInt(CANVAS_SIZE / 9);
+
+    for (r=1; r <= 9; r++) {
+      for (c=1; c <= 9; c++) {
+        obj = cell();
+        obj.initialize({x:(r-1) * cell_size, y:(c-1) * cell_size},
+          {row: r, column: c},
+          {width: cell_size, height: cell_size});
+        this.add(obj);
+      }
+    }
+  };
+  that.add = function(cell) {
+    _my.cells.push(cell);
+  };
+  that.get = function(i) {
+    return _my.cells[i];
+  };
+  that.getByRowAndColumn = function() {
+
+  };
+  that.setActiveCell = function(cell) {
+    return _my.active_cell = cell;
+  };
+  that.getActiveCell = function() {
+    return _my.active_cell;
+  };
+  that.findCellByPosition = function(pt) {
+    var i, cell;
+
+    console.log('# of cells ' + _my.cells.length);
+    for (i=0; i < _my.cells.length; i++) {
+      cell = this.get(i);
+      if (cell.isPointWithin(pt)) {
+        return cell;
+      }
+    }
+    return null;
+  };
+  that.gatherState = function() {
+    return _my.cells.map(function(c) {
+      return c.getValue();
+    });
+  };
+  that.draw = function() {
+
+  };
+
+  return that;
+};
+
+var cell = function() {
+  var _my, that, _draw, _clear, _animate;
+
+      var counter = 1;
+
+  _animate = function() {
+      counter++;
+    if (counter > 7) return;
+    if (counter % 2) {
+      _clear();
+      return;
+    }
+    _draw();
+  };
+  _draw = function(color) {
+    ctx.beginPath();
+    ctx.rect(_my.origin.x + 1, _my.origin.y + 1, _my.dimensions.width - 2, _my.dimensions.height - 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.closePath();
+  };
+  _clear = function() {
+    ctx.beginPath();
+    ctx.clearRect(_my.origin.x + 1, _my.origin.y + 1, _my.dimensions.width - 2, _my.dimensions.height - 2);
+    ctx.closePath();
+  };
+
+  _my = {
+    origin: {x:0, y:0},
+    location: {row: 0, column: 0},
+    dimensions: {width: 0, height: 0},
+    filled_in: false,
+    value: null
+  };
+
+  that = {};
+  that.initialize = function(pt, loc, dims) {
+    _my.origin = pt;
+    _my.location = loc;
+    _my.dimensions = dims;
+  };
+  that.isPointWithin = function(pt) {
+    if (pt.x >= _my.origin.x && pt.x <= _my.origin.x + _my.dimensions.width &&
+        pt.y >= _my.origin.y && pt.y <= _my.origin.y + _my.dimensions.height) {
+      return true;
+    }
+    return false;
+  };
+  that.setValue = function(v) {
+    _my.value = v;
+    return this;
+  };
+  that.getValue = function() {
+    return _my.value;
+  };
+  that.activate = function() {
+    _draw('white');
+
+    ctx.beginPath();
+    ctx.lineStyle = 'black';
+    ctx.lineWidth = 3;
+    ctx.moveTo(_my.origin.x + 8, _my.origin.y + _my.dimensions.height - 10);
+    ctx.lineTo(_my.origin.x + _my.dimensions.width - 8, _my.origin.y + _my.dimensions.height - 10);
+    ctx.stroke();
+    ctx.closePath();
+  };
+  that.draw = function() {
+    var val = $A.translate(this.getValue());
+
+    console.dir(val);
+//    console.dir(val.);
+
+    ctx.beginPath();
+    ctx.rect(_my.origin.x + 1, _my.origin.y + 1, _my.dimensions.width - 2, _my.dimensions.height - 2);
+    ctx.fillStyle = val.value;
+    ctx.fill();
+    ctx.closePath();
+
+//    _draw('yellow');
+//    setTimeout(_animate.call(this), 300);
+  };
+  return that;
+};
+
+
 var canvas_width = window.innerWidth - (6 * 2);
 var canvas_height = window.innerHeight - (6 * 2) - 60;
 
@@ -78,9 +276,48 @@ var CANVAS_SIZE = canvas_size - size_remainder;
 var cnvs = document.getElementById('stage');
 cnvs.width = CANVAS_SIZE;
 cnvs.height = CANVAS_SIZE;
-cnvs.style.visibility = 'visible';
+
+
+cnvs.addEventListener('click', function(event) {
+  var cell = $A.board.findCellByPosition({x: event.offsetX, y: event.offsetY});
+  if (!cell) {
+    return false;
+  }
+  cell.activate();
+
+  $A.board.setActiveCell(cell);
+  $A.setStatus('waiting for input');
+}, false);
+
+window.addEventListener('keydown', function(event) {
+  var cell, value;
+
+  if ($A.getStatus() !== 'waiting for input') {
+    return;
+  }
+  if (!(cell = $A.board.getActiveCell())) {
+    return;
+  }
+
+  value = parseInt(String.fromCharCode(event.keyCode));
+  if ([1, 2, 3, 4, 5, 6, 7, 8, 9].indexOf(value) == -1) {
+    return;
+  }
+
+  cell.setValue(value);
+  cell.draw();
+}, false);
+
+document.getElementById('btn_solve').addEventListener('click', function(e) {
+  e.preventDefault();
+
+  var state = $A.board.gatherState();
+  socket.emit('solve', state.toString());
+  return false;
+}, false);
 
 var ctx = cnvs.getContext("2d");
+
 
 function drawBoard() {
   var region_size = parseInt(CANVAS_SIZE / 3);
@@ -97,6 +334,10 @@ function drawRegions(size) {
 
   ctx.beginPath();
   ctx.lineWidth = 2;
+  /*
+   * @todo
+   * this might be causing a problem with the underline.   save status.
+   */
   ctx.strokeStyle = 'lightgray';
 
   for (n=1; n < 3; n++) {
@@ -117,6 +358,10 @@ function drawCells(size) {
   ctx.beginPath();
   ctx.setLineDash([2,3]);
   ctx.lineWidth = 1;
+  /*
+   * @todo
+   * this might be causing a problem with the underline.   save status.
+   */
   ctx.strokeStyle = 'lightgray';
 
   for (n=1; n < 9; n++) {
@@ -133,7 +378,12 @@ function drawCells(size) {
   ctx.stroke();
 }
 
+var $A = app();
+$A.board = board();
+$A.board.initialize();
+
 drawBoard();
+cnvs.style.visibility = 'visible';
 </script>
 
 </body>
